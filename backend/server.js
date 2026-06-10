@@ -92,6 +92,12 @@ app.post('/api/tasks', authenticate, async (req, res) => {
     'SELECT t.*, u.username FROM tasks t JOIN users u ON t.user_id = u.id WHERE t.id = $1',
     [result.rows[0].id]
   );
+
+  await run(
+    'INSERT INTO notifications (message, task_id, created_by, type) VALUES ($1, $2, $3, $4)',
+    [`${req.user.username} creó la tarea "${task.title}"`, task.id, req.user.id, 'created']
+  );
+
   res.status(201).json(task);
 });
 
@@ -114,11 +120,29 @@ app.put('/api/tasks/:id', authenticate, async (req, res) => {
     ]
   );
 
+  if (completed && !task.completed) {
+    await run(
+      'INSERT INTO notifications (message, task_id, created_by, type) VALUES ($1, $2, $3, $4)',
+      [`${req.user.username} completó la tarea "${task.title}"`, task.id, req.user.id, 'completed']
+    );
+  }
+
   const updated = await get(
     'SELECT t.*, u.username FROM tasks t JOIN users u ON t.user_id = u.id WHERE t.id = $1',
     [req.params.id]
   );
   res.json(updated);
+});
+
+app.get('/api/notifications', authenticate, async (req, res) => {
+  const notifications = await query(`
+    SELECT n.*, u.username 
+    FROM notifications n 
+    JOIN users u ON n.created_by = u.id 
+    ORDER BY n.created_at DESC 
+    LIMIT 20
+  `);
+  res.json(notifications);
 });
 
 app.delete('/api/tasks/:id', authenticate, async (req, res) => {
