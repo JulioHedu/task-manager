@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { formStyles as s } from './formStyles';
 
 export default function Register() {
   const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -12,45 +14,55 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.password !== form.confirm) {
-      return setError('Las contraseñas no coinciden');
-    }
+    if (form.password !== form.confirm) return setError('Las contraseñas no coinciden');
+    setLoading(true);
+    setError('');
     try {
       await register(form.username, form.email, form.password);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al registrarse');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <h2>Registrarse</h2>
-        {error && <p style={styles.error}>{error}</p>}
-        <input name="username" placeholder="Usuario" value={form.username} onChange={handleChange} style={styles.input} required />
-        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} style={styles.input} required />
-        <input name="password" type="password" placeholder="Contraseña" value={form.password} onChange={handleChange} style={styles.input} required />
-        <input name="confirm" type="password" placeholder="Confirmar Contraseña" value={form.confirm} onChange={handleChange} style={styles.input} required />
-        <button type="submit" style={styles.btn}>Crear Cuenta</button>
-        <p style={styles.text}>
-          ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
+    <div style={s.page}>
+      <div style={s.card}>
+        <div style={s.header}>
+          <div style={s.iconWrap}>
+            <span style={s.icon}>+</span>
+          </div>
+          <h1 style={s.title}>Crear cuenta</h1>
+          <p style={s.subtitle}>Únete para gestionar tus tareas</p>
+        </div>
+        {error && <div style={s.errorBox}>{error}</div>}
+        <form onSubmit={handleSubmit} style={s.form}>
+          <div style={s.field}>
+            <label style={s.label}>Usuario</label>
+            <input name="username" placeholder="tunombre" value={form.username} onChange={handleChange} style={s.input} required />
+          </div>
+          <div style={s.field}>
+            <label style={s.label}>Correo electrónico</label>
+            <input name="email" type="email" placeholder="tu@email.com" value={form.email} onChange={handleChange} style={s.input} required />
+          </div>
+          <div style={s.field}>
+            <label style={s.label}>Contraseña</label>
+            <input name="password" type="password" placeholder="••••••••" value={form.password} onChange={handleChange} style={s.input} required />
+          </div>
+          <div style={s.field}>
+            <label style={s.label}>Confirmar contraseña</label>
+            <input name="confirm" type="password" placeholder="••••••••" value={form.confirm} onChange={handleChange} style={s.input} required />
+          </div>
+          <button type="submit" style={loading ? { ...s.btn, opacity: 0.7 } : s.btn} disabled={loading}>
+            {loading ? 'Creando cuenta…' : 'Crear cuenta'}
+          </button>
+        </form>
+        <p style={s.switchText}>
+          ¿Ya tienes cuenta? <Link to="/login" style={s.switchLink}>Inicia sesión</Link>
         </p>
-      </form>
+      </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh',
-  },
-  form: {
-    display: 'flex', flexDirection: 'column', gap: '1rem', padding: '2rem',
-    background: '#fff', borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.1)', width: 320,
-  },
-  input: { padding: '0.6rem', border: '1px solid #ddd', borderRadius: 4, fontSize: '1rem' },
-  btn: { padding: '0.6rem', background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 4, fontSize: '1rem', cursor: 'pointer' },
-  error: { color: '#e94560', margin: 0 },
-  text: { textAlign: 'center', margin: 0 },
-};

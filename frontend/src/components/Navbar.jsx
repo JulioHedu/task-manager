@@ -11,19 +11,28 @@ export default function Navbar() {
   };
 
   return (
-    <nav style={styles.nav}>
-      <Link to="/" style={styles.brand}>Task Manager</Link>
-      <div style={styles.links}>
+    <nav style={s.nav}>
+      <Link to="/" style={s.brand}>
+        <span style={s.brandDot} />
+        Task Manager
+      </Link>
+      <div style={s.right}>
         {user ? (
           <>
-            <span style={styles.user}>Hola, {user.username}</span>
-            <Link to="/create" style={styles.link}>Nueva Tarea</Link>
-            <button onClick={handleLogout} style={styles.btn}>Cerrar Sesión</button>
+            <Link to="/create" style={s.newBtn}>
+              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Nueva tarea
+            </Link>
+            <div style={s.divider} />
+            <span style={s.userChip}>
+              <span style={s.avatar}>{user.username?.[0]?.toUpperCase()}</span>
+              {user.username}
+            </span>
+            <button onClick={handleLogout} style={s.logoutBtn}>Salir</button>
           </>
         ) : (
           <>
-            <Link to="/login" style={styles.link}>Iniciar Sesión</Link>
-            <Link to="/register" style={styles.link}>Registrarse</Link>
+            <Link to="/login" style={s.link}>Iniciar sesión</Link>
+            <Link to="/register" style={s.registerBtn}>Registrarse</Link>
           </>
         )}
       </div>
@@ -31,39 +40,100 @@ export default function Navbar() {
   );
 }
 
-const styles = {
+const s = {
   nav: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '1rem 2rem',
+    padding: '0 2rem',
+    height: 60,
     background: '#1a1a2e',
-    color: '#fff',
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100,
   },
   brand: {
-    fontSize: '1.3rem',
-    fontWeight: 'bold',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: '1rem',
+    fontWeight: 600,
     color: '#fff',
     textDecoration: 'none',
+    letterSpacing: '-0.01em',
   },
-  links: {
+  brandDot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    background: '#6c63ff',
+    flexShrink: 0,
+  },
+  right: {
     display: 'flex',
-    gap: '1rem',
     alignItems: 'center',
+    gap: '0.75rem',
   },
-  user: {
-    color: '#e0e0e0',
+  newBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '0.4rem 0.9rem',
+    background: '#6c63ff',
+    color: '#fff',
+    textDecoration: 'none',
+    borderRadius: 8,
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    transition: 'background 150ms ease',
+  },
+  divider: {
+    width: 1,
+    height: 20,
+    background: 'rgba(255,255,255,0.12)',
+    margin: '0 0.25rem',
+  },
+  userChip: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 7,
+    fontSize: '0.875rem',
+    color: 'rgba(255,255,255,0.75)',
+  },
+  avatar: {
+    width: 26,
+    height: 26,
+    borderRadius: '50%',
+    background: 'rgba(108,99,255,0.35)',
+    color: '#c4c0ff',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutBtn: {
+    background: 'transparent',
+    color: 'rgba(255,255,255,0.5)',
+    border: '1px solid rgba(255,255,255,0.15)',
+    padding: '0.35rem 0.8rem',
+    borderRadius: 7,
+    fontSize: '0.8rem',
+    cursor: 'pointer',
   },
   link: {
+    color: 'rgba(255,255,255,0.7)',
+    textDecoration: 'none',
+    fontSize: '0.875rem',
+  },
+  registerBtn: {
+    padding: '0.4rem 0.9rem',
+    background: 'rgba(255,255,255,0.1)',
     color: '#fff',
     textDecoration: 'none',
-  },
-  btn: {
-    background: '#e94560',
-    color: '#fff',
-    border: 'none',
-    padding: '0.4rem 1rem',
-    borderRadius: 4,
-    cursor: 'pointer',
+    borderRadius: 8,
+    fontSize: '0.875rem',
+    fontWeight: 500,
   },
 };
