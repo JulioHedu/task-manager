@@ -1,9 +1,35 @@
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [notifs, setNotifs] = useState([]);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const dropdownRef = useRef();
+
+  useEffect(() => {
+    if (!user) return;
+    const fetch = () =>
+      api.get('/notifications').then((res) => setNotifs(res.data)).catch(() => {});
+    fetch();
+    const interval = setInterval(fetch, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowNotifs(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const unreadCount = notifs.filter((n) => !n.read).length;
 
   const handleLogout = () => {
     logout();
@@ -23,6 +49,30 @@ export default function Navbar() {
               <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Nueva tarea
             </Link>
             <div style={s.divider} />
+            <div ref={dropdownRef} style={{ position: 'relative' }}>
+              <button onClick={() => setShowNotifs(!showNotifs)} style={s.bellBtn}>
+                🔔
+                {unreadCount > 0 && <span style={s.badge}>{unreadCount}</span>}
+              </button>
+              {showNotifs && (
+                <div style={s.dropdown}>
+                  <div style={s.dropdownHeader}>Notificaciones</div>
+                  {notifs.length === 0 ? (
+                    <div style={s.empty}>Sin notificaciones</div>
+                  ) : (
+                    notifs.map((n) => (
+                      <div key={n.id} style={{ ...s.notifItem, opacity: n.read ? 0.6 : 1 }}>
+                        <div style={s.notifDot} />
+                        <span style={s.notifMsg}>{n.message}</span>
+                        <span style={s.notifTime}>
+                          {new Date(n.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             <span style={s.userChip}>
               <span style={s.avatar}>{user.username?.[0]?.toUpperCase()}</span>
               {user.username}
@@ -136,4 +186,73 @@ const s = {
     fontSize: '0.875rem',
     fontWeight: 500,
   },
+  bellBtn: {
+    position: 'relative',
+    background: 'transparent',
+    border: 'none',
+    fontSize: '1.2rem',
+    cursor: 'pointer',
+    padding: 4,
+    lineHeight: 1,
+  },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    background: '#e94560',
+    color: '#fff',
+    fontSize: '0.65rem',
+    fontWeight: 700,
+    minWidth: 17,
+    height: 17,
+    borderRadius: 10,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '0 4px',
+  },
+  dropdown: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    width: 320,
+    maxHeight: 360,
+    overflowY: 'auto',
+    background: '#fff',
+    borderRadius: 10,
+    boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+    marginTop: 8,
+    zIndex: 200,
+  },
+  dropdownHeader: {
+    padding: '0.75rem 1rem',
+    fontWeight: 600,
+    fontSize: '0.9rem',
+    color: '#1a1a2e',
+    borderBottom: '1px solid #eee',
+  },
+  empty: {
+    padding: '1.5rem 1rem',
+    textAlign: 'center',
+    color: '#999',
+    fontSize: '0.85rem',
+  },
+  notifItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: '0.7rem 1rem',
+    borderBottom: '1px solid #f0f0f0',
+    fontSize: '0.85rem',
+    color: '#333',
+  },
+  notifDot: {
+    width: 7,
+    height: 7,
+    borderRadius: '50%',
+    background: '#6c63ff',
+    flexShrink: 0,
+  },
+  notifMsg: { flex: 1, lineHeight: 1.3 },
+  notifTime: { fontSize: '0.75rem', color: '#999', whiteSpace: 'nowrap', marginLeft: 8 },
 };

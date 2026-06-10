@@ -26,6 +26,18 @@ async function initDb() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    message TEXT NOT NULL,
+    task_id INTEGER REFERENCES tasks(id) ON DELETE CASCADE,
+    created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(20) NOT NULL DEFAULT 'created',
+    read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 }
 
 async function query(sql, params = []) {
