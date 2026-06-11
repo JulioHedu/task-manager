@@ -44,7 +44,19 @@ async function query(sql, params = []) {
   const result = await pool.query(sql, params);
   if (sql.trim().toUpperCase().startsWith('SELECT') && result.rows.length === 1 && /\bWHERE\b/i.test(sql)) {
     return result.rows[0];
-  }
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id)
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at DESC)
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC)
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_notifications_created_by ON notifications(created_by)
+  `);
+}
   return result.rows;
 }
 
