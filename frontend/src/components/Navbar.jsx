@@ -12,11 +12,22 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!user) return;
+    let interval;
+
     const fetch = () =>
       api.get('/notifications').then((res) => setNotifs(res.data)).catch(() => {});
-    fetch();
-    const interval = setInterval(fetch, 5000);
-    return () => clearInterval(interval);
+
+    const start = () => {
+      fetch();
+      interval = setInterval(fetch, 30000);
+    };
+    const stop = () => clearInterval(interval);
+
+    start();
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop(); else start();
+    });
+    return () => { stop(); document.removeEventListener('visibilitychange', start); };
   }, [user]);
 
   useEffect(() => {
