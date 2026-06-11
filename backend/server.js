@@ -56,14 +56,20 @@ app.post('/api/login', async (req, res) => {
 });
 
 app.get('/api/tasks', authenticate, async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+  const offset = (page - 1) * limit;
+
+  const { count } = await get('SELECT COUNT(*) as count FROM tasks');
   const tasks = await query(`
     SELECT t.*, u.username 
     FROM tasks t 
     JOIN users u ON t.user_id = u.id 
     ORDER BY t.created_at DESC
-  `);
+    LIMIT $1 OFFSET $2
+  `, [limit, offset]);
 
-  res.json(tasks);
+  res.json({ tasks, total: parseInt(count), page, limit });
 });
 
 app.get('/api/tasks/:id', authenticate, async (req, res) => {

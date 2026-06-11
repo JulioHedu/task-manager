@@ -6,15 +6,22 @@ import { useAuth } from '../context/AuthContext';
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalTasks, setTotalTasks] = useState(0);
   const [filter, setFilter] = useState('all');
+  const limit = 10;
   const { user } = useAuth();
 
   useEffect(() => {
-    api.get('/tasks')
-      .then((res) => setTasks(res.data))
+    setLoading(true);
+    api.get(`/tasks?page=${page}&limit=${limit}`)
+      .then((res) => {
+        setTasks(res.data.tasks);
+        setTotalTasks(res.data.total);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [page]);
 
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar esta tarea?')) return;
@@ -49,13 +56,15 @@ export default function Dashboard() {
   };
 
   const done = tasks.filter(t => t.completed).length;
-  const total = tasks.length;
+  const localTotal = tasks.length;
 
   const filtered = tasks.filter(t => {
     if (filter === 'pending') return !t.completed;
     if (filter === 'done') return t.completed;
     return true;
   });
+
+  const totalPages = Math.ceil(totalTasks / limit);
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 60px)' }}>
@@ -74,23 +83,23 @@ export default function Dashboard() {
         <div style={s.pageHeader}>
           <div>
             <h1 style={s.heading}>Mis tareas</h1>
-            {total > 0 && (
-              <p style={s.subheading}>{done} de {total} completadas</p>
+            {totalTasks > 0 && (
+              <p style={s.subheading}>{done} de {totalTasks} completadas</p>
             )}
           </div>
-          {total > 0 && (
+          {totalTasks > 0 && (
             <div style={s.progressWrap}>
               <div style={s.progressBar}>
-                <div style={{ ...s.progressFill, width: `${total ? (done / total) * 100 : 0}%` }} />
+                <div style={{ ...s.progressFill, width: `${totalTasks ? (done / totalTasks) * 100 : 0}%` }} />
               </div>
             </div>
           )}
         </div>
 
         {/* Filter tabs */}
-        {total > 0 && (
+        {totalTasks > 0 && (
           <div style={s.tabs}>
-            {[['all', 'Todas', total], ['pending', 'Pendientes', tasks.filter(t=>!t.completed).length], ['done', 'Completadas', done]].map(([key, label, count]) => (
+            {[['all', 'Todas', localTotal], ['pending', 'Pendientes', tasks.filter(t=>!t.completed).length], ['done', 'Completadas', done]].map(([key, label, count]) => (
               <button key={key} onClick={() => setFilter(key)} style={filter === key ? s.tabActive : s.tab}>
                 {label}
                 <span style={filter === key ? s.tabBadgeActive : s.tabBadge}>{count}</span>
@@ -148,6 +157,23 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={s.pagination}>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{ ...s.pageBtn, opacity: page === 1 ? 0.4 : 1 }}
+            >← Anterior</button>
+            <span style={s.pageInfo}>Página {page} de {totalPages}</span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{ ...s.pageBtn, opacity: page === totalPages ? 0.4 : 1 }}
+            >Siguiente →</button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -191,4 +217,7 @@ const s = {
   emptyTitle: { fontSize: '1rem', fontWeight: 600, color: '#374151', marginBottom: 6 },
   emptyText: { fontSize: '0.875rem', color: '#9ca3af', marginBottom: '1.25rem' },
   emptyBtn: { display: 'inline-block', padding: '0.55rem 1.25rem', background: '#1a1a2e', color: '#fff', textDecoration: 'none', borderRadius: 9, fontSize: '0.875rem', fontWeight: 600 },
+  pagination: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' },
+  pageBtn: { padding: '0.4rem 1rem', background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, fontSize: '0.85rem', cursor: 'pointer', color: '#374151' },
+  pageInfo: { fontSize: '0.85rem', color: '#6b7280' },
 };
