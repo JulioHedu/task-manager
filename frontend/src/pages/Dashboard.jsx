@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -9,27 +10,31 @@ export default function Dashboard() {
   const [page, setPage] = useState(1);
   const [totalTasks, setTotalTasks] = useState(0);
   const [filter, setFilter] = useState('all');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [error, setError] = useState('');
   const limit = 10;
   const { user } = useAuth();
 
   useEffect(() => {
     setLoading(true);
+    setError('');
     api.get(`/tasks?page=${page}&limit=${limit}`)
       .then((res) => {
         setTasks(res.data.tasks);
         setTotalTasks(res.data.total);
       })
-      .catch(console.error)
+      .catch((err) => setError(err.response?.data?.error || 'Error al cargar tareas'))
       .finally(() => setLoading(false));
   }, [page]);
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar esta tarea?')) return;
     try {
       await api.delete(`/tasks/${id}`);
       setTasks(tasks.filter((t) => t.id !== id));
+      setDeleteTarget(null);
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al eliminar');
+      setError(err.response?.data?.error || 'Error al eliminar');
+      setDeleteTarget(null);
     }
   };
 
@@ -38,7 +43,7 @@ export default function Dashboard() {
       const res = await api.put(`/tasks/${task.id}`, { completed: !task.completed });
       setTasks(tasks.map((t) => (t.id === task.id ? res.data : t)));
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al actualizar');
+      setError(err.response?.data?.error || 'Error al actualizar');
     }
   };
 
@@ -78,6 +83,13 @@ export default function Dashboard() {
   return (
     <div style={s.page}>
       <div style={s.container}>
+
+        {error && (
+          <div style={s.errorToast}>
+            <span>{error}</span>
+            <button onClick={() => setError('')} style={s.errorClose}>✕</button>
+          </div>
+        )}
 
         {/* Header */}
         <div style={s.pageHeader}>
@@ -148,7 +160,7 @@ export default function Dashboard() {
                     {task.user_id === user?.id && (
                       <>
                         <Link to={`/edit/${task.id}`} style={s.actionBtnLink} title="Editar">✏️</Link>
-                        <button onClick={() => handleDelete(task.id)} style={{ ...s.actionBtn, color: '#ef4444' }} title="Eliminar">✕</button>
+                        <button onClick={() => setDeleteTarget(task)} style={{ ...s.actionBtn, color: '#ef4444' }} title="Eliminar">✕</button>
                       </>
                     )}
                   </div>
@@ -174,6 +186,14 @@ export default function Dashboard() {
             >Siguiente →</button>
           </div>
         )}
+        <ConfirmModal
+          open={!!deleteTarget}
+          title="Eliminar tarea"
+          message={`¿Eliminar "${deleteTarget?.title}"? Esta acción no se puede deshacer.`}
+          onConfirm={() => handleDelete(deleteTarget.id)}
+          onCancel={() => setDeleteTarget(null)}
+          danger
+        />
       </div>
     </div>
   );
@@ -182,6 +202,15 @@ export default function Dashboard() {
 const s = {
   page: { background: '#f4f5f7', minHeight: 'calc(100vh - 60px)', padding: '2rem 1rem' },
   container: { maxWidth: 680, margin: '0 auto' },
+  errorToast: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+    padding: '0.6rem 1rem', background: '#fef2f2', border: '1px solid #fecaca',
+    borderRadius: 10, marginBottom: '1rem', fontSize: '0.875rem', color: '#b91c1c',
+  },
+  errorClose: {
+    background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem',
+    color: '#b91c1c', padding: '2px 4px', lineHeight: 1, flexShrink: 0,
+  },
   pageHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem' },
   heading: { fontSize: '1.5rem', fontWeight: 700, color: '#111827', letterSpacing: '-0.02em' },
   subheading: { fontSize: '0.875rem', color: '#6b7280', marginTop: 3 },

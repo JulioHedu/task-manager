@@ -9,7 +9,14 @@ import EditTask from './pages/EditTask';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 60px)' }}>
+      <div style={{ textAlign: 'center', color: '#6b7280' }}>
+        <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>⋯</div>
+        <p style={{ fontSize: '0.875rem' }}>Verificando sesión…</p>
+      </div>
+    </div>
+  );
   return user ? children : <Navigate to="/login" />;
 }
 
