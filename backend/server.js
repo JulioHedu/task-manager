@@ -24,7 +24,7 @@ app.post('/api/register', async (req, res) => {
     return res.status(409).json({ error: 'El usuario o email ya existe' });
   }
 
-  const hashed = bcrypt.hashSync(password, 10);
+  const hashed = await bcrypt.hash(password, 10);
   const result = await run(
     'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id',
     [username, email, hashed]
@@ -44,7 +44,7 @@ app.post('/api/login', async (req, res) => {
   }
 
   const user = await get('SELECT * FROM users WHERE email = $1', [email]);
-  if (!user || !bcrypt.compareSync(password, user.password)) {
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).json({ error: 'Credenciales inválidas' });
   }
 
