@@ -1,4 +1,5 @@
 const express = require('express');
+const helmet = require('helmet');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const { initDb, query, get, run } = require('./db');
@@ -7,7 +8,8 @@ const { authenticate, generateToken } = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(helmet());
+app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }));
 app.use(express.json());
 
 app.post('/api/register', async (req, res) => {
