@@ -157,6 +157,16 @@ app.get('/api/notifications', authenticate, asyncHandler(async (req, res) => {
   res.json(notifications);
 }));
 
+app.put('/api/notifications/read-all', authenticate, asyncHandler(async (req, res) => {
+  await run('UPDATE notifications SET read = true WHERE created_by IN (SELECT id FROM users WHERE id = $1)', [req.user.id]);
+  res.json({ message: 'Todas marcadas como leídas' });
+}));
+
+app.put('/api/notifications/:id/read', authenticate, asyncHandler(async (req, res) => {
+  await run('UPDATE notifications SET read = true WHERE id = $1', [req.params.id]);
+  res.json({ message: 'Notificación marcada como leída' });
+}));
+
 app.delete('/api/tasks/:id', authenticate, asyncHandler(async (req, res) => {
   const task = await get('SELECT * FROM tasks WHERE id = $1', [req.params.id]);
 

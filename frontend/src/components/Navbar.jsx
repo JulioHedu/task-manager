@@ -42,6 +42,27 @@ export default function Navbar() {
 
   const unreadCount = notifs.filter((n) => !n.read).length;
 
+  const markAsRead = async (id) => {
+    try {
+      await api.put(`/notifications/${id}/read`);
+      setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    } catch {}
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await api.put('/notifications/read-all');
+      setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch {}
+  };
+
+  const handleToggleNotifs = () => {
+    setShowNotifs((prev) => !prev);
+    if (!showNotifs && notifs.length > 0) {
+      markAllAsRead();
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -61,18 +82,23 @@ export default function Navbar() {
             </Link>
             <div style={s.divider} />
             <div ref={dropdownRef} style={{ position: 'relative' }}>
-              <button onClick={() => setShowNotifs(!showNotifs)} style={s.bellBtn}>
+              <button onClick={handleToggleNotifs} style={s.bellBtn}>
                 🔔
                 {unreadCount > 0 && <span style={s.badge}>{unreadCount}</span>}
               </button>
               {showNotifs && (
                 <div style={s.dropdown}>
-                  <div style={s.dropdownHeader}>Notificaciones</div>
+                  <div style={s.dropdownHeader}>
+                    <span>Notificaciones</span>
+                    {unreadCount > 0 && (
+                      <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} style={s.markAllBtn}>✓ Marcar todas leídas</button>
+                    )}
+                  </div>
                   {notifs.length === 0 ? (
                     <div style={s.empty}>Sin notificaciones</div>
                   ) : (
                     notifs.map((n) => (
-                      <div key={n.id} style={{ ...s.notifItem, opacity: n.read ? 0.6 : 1 }}>
+                      <div key={n.id} onClick={() => !n.read && markAsRead(n.id)} style={{ ...s.notifItem, opacity: n.read ? 0.6 : 1, cursor: n.read ? 'default' : 'pointer' }}>
                         <div style={s.notifDot} />
                         <span style={s.notifMsg}>{n.message}</span>
                         <span style={s.notifTime}>
@@ -241,6 +267,19 @@ const s = {
     fontSize: '0.9rem',
     color: '#1a1a2e',
     borderBottom: '1px solid #eee',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  markAllBtn: {
+    background: 'transparent',
+    border: 'none',
+    color: '#6c63ff',
+    fontSize: '0.78rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    padding: '2px 6px',
+    borderRadius: 6,
   },
   empty: {
     padding: '1.5rem 1rem',
