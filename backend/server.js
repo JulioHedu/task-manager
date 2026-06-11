@@ -38,7 +38,7 @@ app.post('/api/register', asyncHandler(async (req, res) => {
   const token = generateToken(user);
 
   res.status(201).json({ user, token });
-});
+}));
 
 app.post('/api/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -57,7 +57,7 @@ app.post('/api/login', asyncHandler(async (req, res) => {
     user: { id: user.id, username: user.username, email: user.email },
     token
   });
-});
+}));
 
 app.get('/api/tasks', authenticate, asyncHandler(async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -74,7 +74,7 @@ app.get('/api/tasks', authenticate, asyncHandler(async (req, res) => {
   `, [limit, offset]);
 
   res.json({ tasks, total: parseInt(count), page, limit });
-});
+}));
 
 app.get('/api/tasks/:id', authenticate, asyncHandler(async (req, res) => {
   const task = await get(`
@@ -86,7 +86,7 @@ app.get('/api/tasks/:id', authenticate, asyncHandler(async (req, res) => {
 
   if (!task) return res.status(404).json({ error: 'Tarea no encontrada' });
   res.json(task);
-});
+}));
 
 app.post('/api/tasks', authenticate, asyncHandler(async (req, res) => {
   const { title, description } = req.body;
@@ -111,7 +111,7 @@ app.post('/api/tasks', authenticate, asyncHandler(async (req, res) => {
   );
 
   res.status(201).json(task);
-});
+}));
 
 app.put('/api/tasks/:id', authenticate, asyncHandler(async (req, res) => {
   const { title, description, completed } = req.body;
@@ -144,7 +144,7 @@ app.put('/api/tasks/:id', authenticate, asyncHandler(async (req, res) => {
     [req.params.id]
   );
   res.json(updated);
-});
+}));
 
 app.get('/api/notifications', authenticate, asyncHandler(async (req, res) => {
   const notifications = await query(`
@@ -155,7 +155,7 @@ app.get('/api/notifications', authenticate, asyncHandler(async (req, res) => {
     LIMIT 20
   `);
   res.json(notifications);
-});
+}));
 
 app.delete('/api/tasks/:id', authenticate, asyncHandler(async (req, res) => {
   const task = await get('SELECT * FROM tasks WHERE id = $1', [req.params.id]);
@@ -167,7 +167,7 @@ app.delete('/api/tasks/:id', authenticate, asyncHandler(async (req, res) => {
 
   await run('DELETE FROM tasks WHERE id = $1', [req.params.id]);
   res.json({ message: 'Tarea eliminada' });
-});
+}));
 
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
