@@ -185,6 +185,11 @@ const TIPOS_BITACORA = ['incidencias', 'afiliados'];
 const CAMPOS_REQUERIDOS = {
   incidencias: ['categoria', 'severidad', 'descripcion'],
   afiliados: ['fecha_alta', 'negocio_afiliado'],
+  crm: ['prospecto', 'fecha_contacto'],
+  membresias: ['afiliado', 'tipo_membresia'],
+  trabajo_socios: ['fecha', 'actividad', 'responsable'],
+  pedidos: ['pedido', 'afiliado', 'fecha'],
+  tecnologica: ['fecha', 'cambio_realizado', 'sistema_afectado'],
 };
 
 app.get('/api/bitacoras', authenticate, asyncHandler(async (req, res) => {

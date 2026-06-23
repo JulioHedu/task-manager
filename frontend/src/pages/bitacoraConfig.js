@@ -1,5 +1,130 @@
 export const BITACORA_TYPES = [
   {
+    id: 'tecnologica',
+    label: 'Bitácora Tecnológica',
+    icon: '💻',
+    fields: [
+      { name: 'fecha', label: 'Fecha', type: 'date', required: true },
+      { name: 'cambio_realizado', label: 'Cambio realizado', type: 'text', required: true },
+      { name: 'sistema_afectado', label: 'Sistema afectado', type: 'text', required: true },
+      { name: 'responsable', label: 'Responsable', type: 'text' },
+      { name: 'pruebas_ejecutadas', label: 'Pruebas ejecutadas', type: 'textarea' },
+      { name: 'resultado', label: 'Resultado', type: 'select', options: ['Exitoso', 'Fallido', 'Pendiente', 'Parcial'] },
+      { name: 'aprobacion', label: 'Aprobación', type: 'text' },
+      { name: 'incidencias_asociadas', label: 'Incidencias asociadas', type: 'textarea' },
+    ],
+    preview: (data) => [
+      { label: 'Cambio', value: data.cambio_realizado },
+      { label: 'Sistema', value: data.sistema_afectado },
+      { label: 'Resultado', value: data.resultado },
+    ],
+    badge: (data) => data.resultado,
+    badgeColor: (data) => {
+      const map = { exitoso: '#16a34a', fallido: '#dc2626', pendiente: '#ca8a04', parcial: '#f97316' };
+      return map[data.resultado?.toLowerCase()] || '#6b7280';
+    },
+  },
+  {
+    id: 'pedidos',
+    label: 'Bitácora de Pedidos',
+    icon: '📦',
+    fields: [
+      { name: 'pedido', label: 'Pedido', type: 'text', required: true },
+      { name: 'afiliado', label: 'Afiliado', type: 'text', required: true },
+      { name: 'fecha', label: 'Fecha', type: 'date', required: true },
+      { name: 'hora_aceptacion', label: 'Hora de aceptación', type: 'time' },
+      { name: 'hora_preparacion', label: 'Hora de preparación', type: 'time' },
+      { name: 'hora_entrega', label: 'Hora de entrega', type: 'time' },
+      { name: 'estatus', label: 'Estatus', type: 'select', options: ['Recibido', 'En preparación', 'Listo', 'Entregado', 'Cancelado'] },
+      { name: 'incidencias_asociadas', label: 'Incidencias asociadas', type: 'textarea' },
+    ],
+    preview: (data) => [
+      { label: 'Pedido', value: data.pedido },
+      { label: 'Afiliado', value: data.afiliado },
+      { label: 'Estatus', value: data.estatus },
+    ],
+    badge: (data) => data.estatus,
+    badgeColor: (data) => {
+      const map = { recibido: '#6c63ff', 'en preparación': '#ca8a04', listo: '#16a34a', entregado: '#059669', cancelado: '#dc2626' };
+      return map[data.estatus?.toLowerCase()] || '#6b7280';
+    },
+  },
+  {
+    id: 'trabajo_socios',
+    label: 'Bitácora de Trabajo de Socios',
+    icon: '🤝',
+    fields: [
+      { name: 'fecha', label: 'Fecha', type: 'date', required: true },
+      { name: 'actividad', label: 'Actividad', type: 'text', required: true },
+      { name: 'responsable', label: 'Responsable', type: 'text', required: true },
+      { name: 'horas_invertidas', label: 'Horas invertidas', type: 'text' },
+      { name: 'entregable', label: 'Entregable', type: 'text' },
+      { name: 'evidencia', label: 'Evidencia', type: 'text' },
+      { name: 'resultado', label: 'Resultado', type: 'textarea' },
+      { name: 'impacto', label: 'Impacto', type: 'select', options: ['Bajo', 'Medio', 'Alto', 'Crítico'] },
+    ],
+    preview: (data) => [
+      { label: 'Actividad', value: data.actividad },
+      { label: 'Responsable', value: data.responsable },
+      { label: 'Impacto', value: data.impacto },
+    ],
+    badge: (data) => data.impacto,
+    badgeColor: (data) => {
+      const map = { bajo: '#16a34a', medio: '#ca8a04', alto: '#f97316', crítico: '#dc2626' };
+      return map[data.impacto?.toLowerCase()] || '#6b7280';
+    },
+  },
+  {
+    id: 'membresias',
+    label: 'Bitácora de Membresías',
+    icon: '💳',
+    fields: [
+      { name: 'afiliado', label: 'Afiliado', type: 'text', required: true },
+      { name: 'tipo_membresia', label: 'Tipo de membresía', type: 'select', options: ['Básica', 'Premium', 'VIP', 'Corporativa'], required: true },
+      { name: 'monto', label: 'Monto', type: 'text' },
+      { name: 'fecha_pago', label: 'Fecha de pago', type: 'date' },
+      { name: 'vigencia', label: 'Vigencia', type: 'date' },
+      { name: 'renovacion', label: 'Renovación', type: 'text' },
+      { name: 'estatus', label: 'Estatus', type: 'select', options: ['Activa', 'Vencida', 'Cancelada', 'Pendiente'] },
+    ],
+    preview: (data) => [
+      { label: 'Afiliado', value: data.afiliado },
+      { label: 'Membresía', value: data.tipo_membresia },
+      { label: 'Estatus', value: data.estatus },
+    ],
+    badge: (data) => data.estatus,
+    badgeColor: (data) => {
+      const map = { activa: '#16a34a', vencida: '#dc2626', cancelada: '#6b7280', pendiente: '#ca8a04' };
+      return map[data.estatus?.toLowerCase()] || '#6b7280';
+    },
+  },
+  {
+    id: 'crm',
+    label: 'Bitácora Comercial (CRM)',
+    icon: '📞',
+    fields: [
+      { name: 'prospecto', label: 'Prospecto', type: 'text', required: true },
+      { name: 'fecha_contacto', label: 'Fecha de contacto', type: 'date', required: true },
+      { name: 'canal_origen', label: 'Canal de origen', type: 'text' },
+      { name: 'subcanal', label: 'Subcanal', type: 'text' },
+      { name: 'scout_responsable', label: 'Scout responsable', type: 'text' },
+      { name: 'estatus', label: 'Estatus', type: 'select', options: ['Nuevo', 'En seguimiento', 'Negociación', 'Cerrado ganado', 'Cerrado perdido'] },
+      { name: 'objeciones', label: 'Objeciones', type: 'textarea' },
+      { name: 'proxima_accion', label: 'Próxima acción', type: 'text' },
+      { name: 'resultado', label: 'Resultado', type: 'textarea' },
+    ],
+    preview: (data) => [
+      { label: 'Prospecto', value: data.prospecto },
+      { label: 'Estatus', value: data.estatus },
+      { label: 'Canal', value: data.canal_origen },
+    ],
+    badge: (data) => data.estatus,
+    badgeColor: (data) => {
+      const map = { nuevo: '#6c63ff', 'en seguimiento': '#ca8a04', negociación: '#f97316', 'cerrado ganado': '#16a34a', 'cerrado perdido': '#dc2626' };
+      return map[data.estatus?.toLowerCase()] || '#6b7280';
+    },
+  },
+  {
     id: 'incidencias',
     label: 'Bitácora Maestra de Incidencias',
     icon: '⚠️',
