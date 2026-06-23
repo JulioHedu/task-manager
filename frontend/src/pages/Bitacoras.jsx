@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import ConfirmModal from '../components/ConfirmModal';
+import { getTypeConfig } from './bitacoraConfig';
 
 export default function Bitacoras() {
   const [bitacoras, setBitacoras] = useState([]);
@@ -37,13 +38,6 @@ export default function Bitacoras() {
 
   const totalPages = Math.ceil(total / limit);
 
-  const severidadColor = (sev) => {
-    const map = {
-      baja: '#16a34a', media: '#ca8a04', alta: '#dc2626', crítica: '#7c3aed',
-    };
-    return map[sev?.toLowerCase()] || '#6b7280';
-  };
-
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 60px)' }}>
       <div style={{ textAlign: 'center', color: '#6b7280' }}>
@@ -78,33 +72,48 @@ export default function Bitacoras() {
         )}
 
         <div style={s.list}>
-          {bitacoras.map((b) => (
-            <div key={b.folio} style={s.card}>
-              <div style={s.cardLeft}>
-                <span style={s.folioBadge}>#{b.folio}</span>
-              </div>
-              <div style={s.cardBody}>
-                <div style={s.cardTop}>
-                  <Link to={`/bitacoras/${b.folio}`} style={s.cardTitle}>{b.categoria}</Link>
-                  <span style={{ ...s.severidadBadge, background: severidadColor(b.severidad), color: '#fff' }}>
-                    {b.severidad}
-                  </span>
+          {bitacoras.map((b) => {
+            const cfg = getTypeConfig(b.tipo);
+            const data = b.data || {};
+            return (
+              <div key={b.folio} style={s.card}>
+                <div style={s.cardLeft}>
+                  <span style={s.folioBadge}>#{b.folio}</span>
                 </div>
-                <p style={s.cardDesc}>{b.descripcion}</p>
-                <div style={s.cardMeta}>
-                  <span style={s.metaItem}>📅 {b.fecha}</span>
-                  <span style={s.metaItem}>🕐 {b.hora?.slice(0, 5)}</span>
-                  <span style={s.metaItem}>por {b.username}</span>
-                  {b.cierre && <span style={{ ...s.metaItem, color: '#16a34a' }}>✓ Cerrada</span>}
-                  <div style={s.actions}>
-                    <Link to={`/bitacoras/${b.folio}`} style={s.actionLink} title="Ver">👁</Link>
-                    <Link to={`/bitacoras/${b.folio}/edit`} style={s.actionLink} title="Editar">✏️</Link>
-                    <button onClick={() => setDeleteTarget(b)} style={{ ...s.actionBtn, color: '#ef4444' }} title="Eliminar">✕</button>
+                <div style={s.cardBody}>
+                  <div style={s.cardTop}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>{cfg?.icon || '📄'}</span>
+                      <Link to={`/bitacoras/${b.folio}`} style={s.cardTitle}>
+                        {cfg?.label || b.tipo}
+                      </Link>
+                    </div>
+                    {cfg?.badge && (
+                      <span style={{ ...s.badge, background: cfg.badgeColor(data), color: '#fff' }}>
+                        {cfg.badge(data)}
+                      </span>
+                    )}
+                  </div>
+                  {cfg?.preview && (
+                    <div style={s.preview}>
+                      {cfg.preview(data).map((item, i) => (
+                        item.value && <span key={i} style={s.previewItem}><b>{item.label}:</b> {item.value}{item.value?.length >= 80 ? '…' : ''}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div style={s.cardMeta}>
+                    <span style={s.metaItem}>por {b.username}</span>
+                    <span style={s.metaItem}>{new Date(b.created_at).toLocaleDateString()}</span>
+                    <div style={s.actions}>
+                      <Link to={`/bitacoras/${b.folio}`} style={s.actionLink} title="Ver">👁</Link>
+                      <Link to={`/bitacoras/${b.folio}/edit`} style={s.actionLink} title="Editar">✏️</Link>
+                      <button onClick={() => setDeleteTarget(b)} style={{ ...s.actionBtn, color: '#ef4444' }} title="Eliminar">✕</button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {totalPages > 1 && (
@@ -150,10 +159,11 @@ const s = {
   cardLeft: { flexShrink: 0, paddingTop: 2 },
   folioBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 6, background: '#f3f4f6', color: '#6b7280', fontSize: '0.75rem', fontWeight: 700, fontFamily: 'monospace' },
   cardBody: { flex: 1, minWidth: 0 },
-  cardTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 4 },
-  cardTitle: { fontSize: '0.95rem', fontWeight: 600, color: '#111827', textDecoration: 'none' },
-  severidadBadge: { flexShrink: 0, fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: 99 },
-  cardDesc: { fontSize: '0.84rem', color: '#6b7280', marginBottom: 8, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  cardTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 },
+  cardTitle: { fontSize: '0.9rem', fontWeight: 600, color: '#111827', textDecoration: 'none' },
+  badge: { flexShrink: 0, fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: 99 },
+  preview: { display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 6 },
+  previewItem: { fontSize: '0.8rem', color: '#6b7280', lineHeight: 1.4 },
   cardMeta: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 2 },
   metaItem: { fontSize: '0.75rem', color: '#9ca3af' },
   actions: { display: 'flex', gap: 2, marginLeft: 'auto' },

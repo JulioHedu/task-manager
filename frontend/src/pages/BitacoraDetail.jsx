@@ -2,17 +2,25 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { getTypeConfig } from './bitacoraConfig';
 
 export default function BitacoraDetail() {
   const { folio } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [bitacora, setBitacora] = useState(null);
+  const [cfg, setCfg] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.get(`/bitacoras/${folio}`)
-      .then((res) => setBitacora(res.data))
+      .then((res) => {
+        const b = res.data;
+        const config = getTypeConfig(b.tipo);
+        if (!config) return navigate('/bitacoras');
+        setCfg(config);
+        setBitacora(b);
+      })
       .catch(() => navigate('/bitacoras'))
       .finally(() => setLoading(false));
   }, [folio, navigate]);
@@ -26,12 +34,14 @@ export default function BitacoraDetail() {
     </div>
   );
 
-  if (!bitacora) return null;
+  if (!bitacora || !cfg) return null;
+
+  const data = bitacora.data || {};
 
   const Row = ({ label, value }) => (
     <tr>
       <td style={s.labelCell}>{label}</td>
-      <td style={s.valueCell}>{value || <span style={{ color: '#d1d5db' }}>—</span>}</td>
+      <td style={s.valueCell}>{value || value === 0 ? value : <span style={{ color: '#d1d5db' }}>—</span>}</td>
     </tr>
   );
 
@@ -41,7 +51,7 @@ export default function BitacoraDetail() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.5rem' }}>
           <Link to="/bitacoras" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '0.875rem' }}>← Bitácoras</Link>
           <span style={{ color: '#d1d5db' }}>|</span>
-          <h1 style={s.heading}>Bitácora #{bitacora.folio}</h1>
+          <h1 style={s.heading}>{cfg.icon} {cfg.label} #{bitacora.folio}</h1>
           {bitacora.user_id === user?.id && (
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
               <Link to={`/bitacoras/${folio}/edit`} style={s.editBtn}>✏️ Editar</Link>
@@ -53,18 +63,10 @@ export default function BitacoraDetail() {
           <table style={s.table}>
             <tbody>
               <Row label="Folio" value={`#${bitacora.folio}`} />
-              <Row label="Fecha" value={bitacora.fecha} />
-              <Row label="Hora" value={bitacora.hora?.slice(0, 5)} />
-              <Row label="Categoría" value={bitacora.categoria} />
-              <Row label="Severidad" value={bitacora.severidad} />
-              <Row label="Descripción" value={bitacora.descripcion} />
-              <Row label="Responsable operativo" value={bitacora.responsable_operativo} />
-              <Row label="Responsable final" value={bitacora.responsable_final} />
-              <Row label="Evidencia" value={bitacora.evidencia} />
-              <Row label="Acciones ejecutadas" value={bitacora.acciones_ejecutadas} />
-              <Row label="Tiempo de resolución" value={bitacora.tiempo_resolucion} />
-              <Row label="Cierre" value={bitacora.cierre} />
-              <Row label="Prevención futura" value={bitacora.prevencion_futura} />
+              <Row label="Tipo" value={cfg.label} />
+              {cfg.fields.map((f) => (
+                <Row key={f.name} label={f.label} value={data[f.name]} />
+              ))}
               <Row label="Creado por" value={bitacora.username} />
               <Row label="Registrado el" value={new Date(bitacora.created_at).toLocaleString()} />
             </tbody>

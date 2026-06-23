@@ -181,6 +181,12 @@ app.delete('/api/tasks/:id', authenticate, asyncHandler(async (req, res) => {
 
 // ---- Bitácoras ----
 
+const TIPOS_BITACORA = ['incidencias', 'afiliados'];
+const CAMPOS_REQUERIDOS = {
+  incidencias: ['categoria', 'severidad', 'descripcion'],
+  afiliados: ['fecha_alta', 'negocio_afiliado'],
+};
+
 app.get('/api/bitacoras', authenticate, asyncHandler(async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
@@ -188,7 +194,7 @@ app.get('/api/bitacoras', authenticate, asyncHandler(async (req, res) => {
 
   const { count } = await get('SELECT COUNT(*) as count FROM bitacoras');
   const bitacoras = await query(`
-    SELECT b.*, u.username
+    SELECT b.folio, b.tipo, b.data, b.user_id, b.created_at, u.username
     FROM bitacoras b
     JOIN users u ON b.user_id = u.id
     ORDER BY b.created_at DESC
@@ -200,7 +206,7 @@ app.get('/api/bitacoras', authenticate, asyncHandler(async (req, res) => {
 
 app.get('/api/bitacoras/:folio', authenticate, asyncHandler(async (req, res) => {
   const bitacora = await get(`
-    SELECT b.*, u.username
+    SELECT b.folio, b.tipo, b.data, b.user_id, b.created_at, u.username
     FROM bitacoras b
     JOIN users u ON b.user_id = u.id
     WHERE b.folio = $1
@@ -211,33 +217,26 @@ app.get('/api/bitacoras/:folio', authenticate, asyncHandler(async (req, res) => 
 }));
 
 app.post('/api/bitacoras', authenticate, asyncHandler(async (req, res) => {
-  const {
-    fecha, hora, categoria, severidad, descripcion,
-    responsable_operativo, responsable_final, evidencia,
-    acciones_ejecutadas, tiempo_resolucion, cierre, prevencion_futura
-  } = req.body;
+  const { tipo, data } = req.body;
 
-  if (!categoria || !severidad || !descripcion) {
-    return res.status(400).json({ error: 'Categoría, severidad y descripción son obligatorios' });
+  if (!tipo || !TIPOS_BITACORA.includes(tipo)) {
+    return res.status(400).json({ error: 'Tipo de bitácora inválido' });
   }
 
-  const result = await run(`
-    INSERT INTO bitacoras (fecha, hora, categoria, severidad, descripcion,
-      responsable_operativo, responsable_final, evidencia,
-      acciones_ejecutadas, tiempo_resolucion, cierre, prevencion_futura, user_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-    RETURNING folio
-  `, [
-    fecha || new Date().toISOString().split('T')[0],
-    hora || new Date().toTimeString().split(' ')[0],
-    categoria, severidad, descripcion,
-    responsable_operativo || null, responsable_final || null, evidencia || null,
-    acciones_ejecutadas || null, tiempo_resolucion || null, cierre || null, prevencion_futura || null,
-    req.user.id
-  ]);
+  const required = CAMPOS_REQUERIDOS[tipo] || [];
+  for (const campo of required) {
+    if (!data || !data[campo]) {
+      return res.status(400).json({ error: `El campo "${campo}" es obligatorio` });
+    }
+  }
+
+  const result = await run(
+    'INSERT INTO bitacoras (tipo, data, user_id) VALUES ($1, $2, $3) RETURNING folio',
+    [tipo, JSON.stringify(data || {}), req.user.id]
+  );
 
   const bitacora = await get(
-    'SELECT b.*, u.username FROM bitacoras b JOIN users u ON b.user_id = u.id WHERE b.folio = $1',
+    'SELECT b.folio, b.tipo, b.data, b.user_id, b.created_at, u.username FROM bitacoras b JOIN users u ON b.user_id = u.id WHERE b.folio = $1',
     [result.rows[0].folio]
   );
 
@@ -251,36 +250,13 @@ app.put('/api/bitacoras/:folio', authenticate, asyncHandler(async (req, res) => 
     return res.status(403).json({ error: 'No tienes permiso para editar esta bitácora' });
   }
 
-  const {
-    fecha, hora, categoria, severidad, descripcion,
-    responsable_operativo, responsable_final, evidencia,
-    acciones_ejecutadas, tiempo_resolucion, cierre, prevencion_futura
-  } = req.body;
-
-  await run(`
-    UPDATE bitacoras SET
-      fecha = COALESCE($1, fecha),
-      hora = COALESCE($2, hora),
-      categoria = COALESCE($3, categoria),
-      severidad = COALESCE($4, severidad),
-      descripcion = COALESCE($5, descripcion),
-      responsable_operativo = COALESCE($6, responsable_operativo),
-      responsable_final = COALESCE($7, responsable_final),
-      evidencia = COALESCE($8, evidencia),
-      acciones_ejecutadas = COALESCE($9, acciones_ejecutadas),
-      tiempo_resolucion = COALESCE($10, tiempo_resolucion),
-      cierre = COALESCE($11, cierre),
-      prevencion_futura = COALESCE($12, prevencion_futura)
-    WHERE folio = $13
-  `, [
-    fecha || null, hora || null, categoria || null, severidad || null, descripcion || null,
-    responsable_operativo ?? null, responsable_final ?? null, evidencia ?? null,
-    acciones_ejecutadas ?? null, tiempo_resolucion ?? null, cierre ?? null, prevencion_futura ?? null,
-    req.params.folio
-  ]);
+  await run(
+    'UPDATE bitacoras SET data = $1 WHERE folio = $2',
+    [JSON.stringify(req.body.data || {}), req.params.folio]
+  );
 
   const updated = await get(
-    'SELECT b.*, u.username FROM bitacoras b JOIN users u ON b.user_id = u.id WHERE b.folio = $1',
+    'SELECT b.folio, b.tipo, b.data, b.user_id, b.created_at, u.username FROM bitacoras b JOIN users u ON b.user_id = u.id WHERE b.folio = $1',
     [req.params.folio]
   );
   res.json(updated);
