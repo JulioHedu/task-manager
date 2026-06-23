@@ -40,6 +40,19 @@ async function initDb() {
 `);
 
   await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT FROM information_schema.columns
+        WHERE table_name = 'bitacoras' AND column_name = 'categoria'
+      ) THEN
+        DROP TABLE bitacoras CASCADE;
+      END IF;
+    END
+    $$;
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS bitacoras (
       folio SERIAL PRIMARY KEY,
       tipo VARCHAR(50) NOT NULL,
