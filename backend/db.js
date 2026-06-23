@@ -38,6 +38,26 @@ async function initDb() {
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS bitacoras (
+      folio SERIAL PRIMARY KEY,
+      fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+      hora TIME NOT NULL DEFAULT CURRENT_TIME,
+      categoria VARCHAR(100),
+      severidad VARCHAR(50),
+      descripcion TEXT,
+      responsable_operativo VARCHAR(255),
+      responsable_final VARCHAR(255),
+      evidencia TEXT,
+      acciones_ejecutadas TEXT,
+      tiempo_resolucion VARCHAR(100),
+      cierre TEXT,
+      prevencion_futura TEXT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 }
 
 async function query(sql, params = []) {

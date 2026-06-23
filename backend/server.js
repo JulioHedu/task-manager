@@ -179,6 +179,124 @@ app.delete('/api/tasks/:id', authenticate, asyncHandler(async (req, res) => {
   res.json({ message: 'Tarea eliminada' });
 }));
 
+// ---- Bitácoras ----
+
+app.get('/api/bitacoras', authenticate, asyncHandler(async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+  const offset = (page - 1) * limit;
+
+  const { count } = await get('SELECT COUNT(*) as count FROM bitacoras');
+  const bitacoras = await query(`
+    SELECT b.*, u.username
+    FROM bitacoras b
+    JOIN users u ON b.user_id = u.id
+    ORDER BY b.created_at DESC
+    LIMIT $1 OFFSET $2
+  `, [limit, offset]);
+
+  res.json({ bitacoras, total: parseInt(count), page, limit });
+}));
+
+app.get('/api/bitacoras/:folio', authenticate, asyncHandler(async (req, res) => {
+  const bitacora = await get(`
+    SELECT b.*, u.username
+    FROM bitacoras b
+    JOIN users u ON b.user_id = u.id
+    WHERE b.folio = $1
+  `, [req.params.folio]);
+
+  if (!bitacora) return res.status(404).json({ error: 'Bitácora no encontrada' });
+  res.json(bitacora);
+}));
+
+app.post('/api/bitacoras', authenticate, asyncHandler(async (req, res) => {
+  const {
+    fecha, hora, categoria, severidad, descripcion,
+    responsable_operativo, responsable_final, evidencia,
+    acciones_ejecutadas, tiempo_resolucion, cierre, prevencion_futura
+  } = req.body;
+
+  if (!categoria || !severidad || !descripcion) {
+    return res.status(400).json({ error: 'Categoría, severidad y descripción son obligatorios' });
+  }
+
+  const result = await run(`
+    INSERT INTO bitacoras (fecha, hora, categoria, severidad, descripcion,
+      responsable_operativo, responsable_final, evidencia,
+      acciones_ejecutadas, tiempo_resolucion, cierre, prevencion_futura, user_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    RETURNING folio
+  `, [
+    fecha || new Date().toISOString().split('T')[0],
+    hora || new Date().toTimeString().split(' ')[0],
+    categoria, severidad, descripcion,
+    responsable_operativo || null, responsable_final || null, evidencia || null,
+    acciones_ejecutadas || null, tiempo_resolucion || null, cierre || null, prevencion_futura || null,
+    req.user.id
+  ]);
+
+  const bitacora = await get(
+    'SELECT b.*, u.username FROM bitacoras b JOIN users u ON b.user_id = u.id WHERE b.folio = $1',
+    [result.rows[0].folio]
+  );
+
+  res.status(201).json(bitacora);
+}));
+
+app.put('/api/bitacoras/:folio', authenticate, asyncHandler(async (req, res) => {
+  const bitacora = await get('SELECT * FROM bitacoras WHERE folio = $1', [req.params.folio]);
+  if (!bitacora) return res.status(404).json({ error: 'Bitácora no encontrada' });
+  if (bitacora.user_id !== req.user.id) {
+    return res.status(403).json({ error: 'No tienes permiso para editar esta bitácora' });
+  }
+
+  const {
+    fecha, hora, categoria, severidad, descripcion,
+    responsable_operativo, responsable_final, evidencia,
+    acciones_ejecutadas, tiempo_resolucion, cierre, prevencion_futura
+  } = req.body;
+
+  await run(`
+    UPDATE bitacoras SET
+      fecha = COALESCE($1, fecha),
+      hora = COALESCE($2, hora),
+      categoria = COALESCE($3, categoria),
+      severidad = COALESCE($4, severidad),
+      descripcion = COALESCE($5, descripcion),
+      responsable_operativo = COALESCE($6, responsable_operativo),
+      responsable_final = COALESCE($7, responsable_final),
+      evidencia = COALESCE($8, evidencia),
+      acciones_ejecutadas = COALESCE($9, acciones_ejecutadas),
+      tiempo_resolucion = COALESCE($10, tiempo_resolucion),
+      cierre = COALESCE($11, cierre),
+      prevencion_futura = COALESCE($12, prevencion_futura)
+    WHERE folio = $13
+  `, [
+    fecha || null, hora || null, categoria || null, severidad || null, descripcion || null,
+    responsable_operativo ?? null, responsable_final ?? null, evidencia ?? null,
+    acciones_ejecutadas ?? null, tiempo_resolucion ?? null, cierre ?? null, prevencion_futura ?? null,
+    req.params.folio
+  ]);
+
+  const updated = await get(
+    'SELECT b.*, u.username FROM bitacoras b JOIN users u ON b.user_id = u.id WHERE b.folio = $1',
+    [req.params.folio]
+  );
+  res.json(updated);
+}));
+
+app.delete('/api/bitacoras/:folio', authenticate, asyncHandler(async (req, res) => {
+  const bitacora = await get('SELECT * FROM bitacoras WHERE folio = $1', [req.params.folio]);
+  if (!bitacora) return res.status(404).json({ error: 'Bitácora no encontrada' });
+  if (bitacora.user_id !== req.user.id) {
+    return res.status(403).json({ error: 'No tienes permiso para eliminar esta bitácora' });
+  }
+
+  await run('DELETE FROM bitacoras WHERE folio = $1', [req.params.folio]);
+  res.json({ message: 'Bitácora eliminada' });
+}));
+
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
   res.status(500).json({ error: 'Error interno del servidor' });

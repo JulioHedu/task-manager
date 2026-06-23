@@ -6,6 +6,10 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import CreateTask from './pages/CreateTask';
 import EditTask from './pages/EditTask';
+import Bitacoras from './pages/Bitacoras';
+import CreateBitacora from './pages/CreateBitacora';
+import EditBitacora from './pages/EditBitacora';
+import BitacoraDetail from './pages/BitacoraDetail';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -32,6 +36,10 @@ function App() {
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/create" element={<ProtectedRoute><CreateTask /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><EditTask /></ProtectedRoute>} />
+            <Route path="/bitacoras" element={<ProtectedRoute><Bitacoras /></ProtectedRoute>} />
+            <Route path="/bitacoras/create" element={<ProtectedRoute><CreateBitacora /></ProtectedRoute>} />
+            <Route path="/bitacoras/:folio" element={<ProtectedRoute><BitacoraDetail /></ProtectedRoute>} />
+            <Route path="/bitacoras/:folio/edit" element={<ProtectedRoute><EditBitacora /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>

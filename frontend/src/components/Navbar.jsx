@@ -77,6 +77,9 @@ export default function Navbar() {
       <div style={s.right}>
         {user ? (
           <>
+            <Link to="/bitacoras" style={s.bitacoraBtn}>
+              📋 Bitácoras
+            </Link>
             <Link to="/create" style={s.newBtn}>
               <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Nueva tarea
             </Link>
@@ -172,6 +175,19 @@ const s = {
     textDecoration: 'none',
     borderRadius: 8,
     fontSize: '0.875rem',
+    fontWeight: 500,
+    transition: 'background 150ms ease',
+  },
+  bitacoraBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '0.4rem 0.9rem',
+    background: 'rgba(255,255,255,0.08)',
+    color: 'rgba(255,255,255,0.85)',
+    textDecoration: 'none',
+    borderRadius: 8,
+    fontSize: '0.85rem',
     fontWeight: 500,
     transition: 'background 150ms ease',
   },
