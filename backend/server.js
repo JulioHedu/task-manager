@@ -181,7 +181,7 @@ app.delete('/api/tasks/:id', authenticate, asyncHandler(async (req, res) => {
 
 // ---- Bitácoras ----
 
-const TIPOS_BITACORA = ['incidencias', 'afiliados'];
+const TIPOS_BITACORA = ['incidencias', 'afiliados', 'crm', 'membresias', 'trabajo_socios', 'pedidos', 'tecnologica'];
 const CAMPOS_REQUERIDOS = {
   incidencias: ['categoria', 'severidad', 'descripcion'],
   afiliados: ['fecha_alta', 'negocio_afiliado'],
