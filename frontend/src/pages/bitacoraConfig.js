@@ -25,31 +25,6 @@ export const BITACORA_TYPES = [
     },
   },
   {
-    id: 'pedidos',
-    label: 'Bitácora de Pedidos',
-    icon: '📦',
-    fields: [
-      { name: 'pedido', label: 'Pedido', type: 'text', required: true },
-      { name: 'afiliado', label: 'Afiliado', type: 'text', required: true },
-      { name: 'fecha', label: 'Fecha', type: 'date', required: true },
-      { name: 'hora_aceptacion', label: 'Hora de aceptación', type: 'time' },
-      { name: 'hora_preparacion', label: 'Hora de preparación', type: 'time' },
-      { name: 'hora_entrega', label: 'Hora de entrega', type: 'time' },
-      { name: 'estatus', label: 'Estatus', type: 'select', options: ['Recibido', 'En preparación', 'Listo', 'Entregado', 'Cancelado'] },
-      { name: 'incidencias_asociadas', label: 'Incidencias asociadas', type: 'textarea' },
-    ],
-    preview: (data) => [
-      { label: 'Pedido', value: data.pedido },
-      { label: 'Afiliado', value: data.afiliado },
-      { label: 'Estatus', value: data.estatus },
-    ],
-    badge: (data) => data.estatus,
-    badgeColor: (data) => {
-      const map = { recibido: '#6c63ff', 'en preparación': '#ca8a04', listo: '#16a34a', entregado: '#059669', cancelado: '#dc2626' };
-      return map[data.estatus?.toLowerCase()] || '#6b7280';
-    },
-  },
-  {
     id: 'trabajo_socios',
     label: 'Bitácora de Trabajo de Socios',
     icon: '🤝',
